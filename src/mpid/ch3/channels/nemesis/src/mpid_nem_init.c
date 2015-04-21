@@ -312,6 +312,7 @@ MPID_nem_init(int pg_rank, MPIDI_PG_t *pg_p, int has_parent ATTRIBUTE((unused)))
     if (mpi_errno) MPIU_ERR_POP(mpi_errno);
 
     /* network init */
+     MPID_nem_num_netmods = 1;//for test my file driver
     if (MPID_nem_num_netmods)
     {
         mpi_errno = MPID_nem_choose_netmod();
@@ -483,7 +484,7 @@ MPID_nem_vc_init (MPIDI_VC_t *vc)
     /* override rendezvous functions */
     vc->rndvSend_fn = MPID_nem_lmt_RndvSend;
     vc->rndvRecv_fn = MPID_nem_lmt_RndvRecv;
-
+     vc_ch->is_local = 0; //for test my file driver
     if (vc_ch->is_local)
     {
         MPIDI_CHANGE_VC_STATE(vc, ACTIVE);
