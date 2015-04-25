@@ -23,12 +23,12 @@ MPID_nem_netmod_funcs_t MPIDI_nem_file_funcs = {
     NULL,/* anysource iprobe */
 	NULL
 };
-
 int MPID_nem_file_nranks;
 int MPID_nem_file_myrank;
 char *mpid_nem_file_rev_buff;
-int MAX_SIZE = 1024;
+int FILE_REV_BUF_MAX_SIZE = 1024;
 fileopt_t *MPID_nem_file_opt;
+
 
 #undef FUNCNAME
 #define FUNCNAME MPID_nem_file_post_init
@@ -90,16 +90,17 @@ int MPID_nem_file_init(MPIDI_PG_t *pg_p, int pg_rank,
 		open the files and get the file fds;
 	*/
 	fd = file_open(MPID_nem_file_nranks,MPID_nem_file_myrank);
-	
+	if(fd == NULL)
+		goto fn_fail;
 	MPIU_CHKPMEM_MALLOC(MPID_nem_file_opt, fileopt_t *,MPID_nem_file_nranks * sizeof(fileopt_t), mpi_errno, "connection table");
     memset(MPID_nem_file_opt, 0, MPID_nem_file_nranks * sizeof(fileopt_t));
 	
 	for(i=0;i < MPID_nem_file_nranks;i++)
 	{
-		MPID_nem_file_opt[i].fd = fd[i];
+		(MPID_nem_file_opt[i]).fd = fd[i];
 	}
 	
-	MPIU_CHKPMEM_MALLOC(mpid_nem_file_rev_buff,char *,MAX_SIZE, mpi_errno,"file temporary buffer");
+	MPIU_CHKPMEM_MALLOC(mpid_nem_file_rev_buff,char *, FILE_REV_BUF_MAX_SIZE , mpi_errno,"file temporary buffer");
 	MPIU_CHKPMEM_COMMIT();
 	mpi_errno = MPID_nem_register_initcomp_cb(MPID_nem_file_post_init);
 	if (mpi_errno)
@@ -115,7 +116,7 @@ fn_fail:
 
 int MPID_nem_file_vc_init(MPIDI_VC_t *vc)
 {
-/*	MPIU_DBG_MSG(VC, VERBOSE, "MPID_nem_file_vc_init---->1");
+	MPIU_DBG_MSG(VC, VERBOSE, "MPID_nem_file_vc_init---->1");
 	int mpi_errno = MPI_SUCCESS;
 	MPIDI_CH3I_VC *vc_ch;
     MPID_nem_file_vc_area *vc_file;
@@ -136,10 +137,11 @@ int MPID_nem_file_vc_init(MPIDI_VC_t *vc)
     vc_ch->prev = NULL;
 	ASSIGN_FO_TO_VC(vc_file,NULL);
 	vc_file->send_queue.head = vc_file->send_queue.tail = NULL;
-	vc_file->fo = &MPID_nem_file_opt[MPID_nem_file_myrank];
+	vc_file->fo = &MPID_nem_file_opt[vc->pg_rank];
 	vc_file->terminate = 0;
-	fo->vc = vc;
-	*/
+	vc_file->fo->vc = vc;
+	    MPIDI_CHANGE_VC_STATE(vc, ACTIVE);
+
     return 0;//mpi_errno;
 }
 
@@ -166,7 +168,7 @@ int MPID_nem_file_vc_terminate(MPIDI_VC_t *vc)
 	int mpi_errno = MPI_SUCCESS;
     MPIDI_STATE_DECL(MPID_NEM_FILE_VC_TERMINATED);
     MPIDI_FUNC_ENTER(MPID_NEM_FILE_VC_TERMINATED);
-	
+    vc->state = MPIDI_VC_STATE_CLOSED;	
     mpi_errno = MPIDI_CH3U_Handle_connection(vc, MPIDI_VC_EVENT_TERMINATED);
 	if (mpi_errno)
 		MPIU_ERR_POP(mpi_errno);
@@ -177,6 +179,7 @@ fn_exit:
 fn_fail:
     MPIU_DBG_MSG_FMT(NEM_SOCK_DET, VERBOSE, (MPIU_DBG_FDEST, "failure. mpi_errno = %d", mpi_errno));
     goto fn_exit;
+	return mpi_errno;
 }
 
 
