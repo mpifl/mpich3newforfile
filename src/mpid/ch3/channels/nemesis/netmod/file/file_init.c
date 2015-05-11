@@ -140,7 +140,7 @@ int MPID_nem_file_vc_init(MPIDI_VC_t *vc)
 	vc_file->fo = &MPID_nem_file_opt[vc->pg_rank];
 	vc_file->terminate = 0;
 	vc_file->fo->vc = vc;
-	    MPIDI_CHANGE_VC_STATE(vc, ACTIVE);
+//	    MPIDI_CHANGE_VC_STATE(vc, ACTIVE);
 
     return 0;//mpi_errno;
 }
@@ -168,7 +168,7 @@ int MPID_nem_file_vc_terminate(MPIDI_VC_t *vc)
 	int mpi_errno = MPI_SUCCESS;
     MPIDI_STATE_DECL(MPID_NEM_FILE_VC_TERMINATED);
     MPIDI_FUNC_ENTER(MPID_NEM_FILE_VC_TERMINATED);
-    vc->state = MPIDI_VC_STATE_CLOSED;	
+  //  vc->state = MPIDI_VC_STATE_CLOSED;	
     mpi_errno = MPIDI_CH3U_Handle_connection(vc, MPIDI_VC_EVENT_TERMINATED);
 	if (mpi_errno)
 		MPIU_ERR_POP(mpi_errno);

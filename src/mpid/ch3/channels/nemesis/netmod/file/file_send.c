@@ -1,8 +1,10 @@
 #include "file_impl.h"
-
-void creat_closefile(){
+extern MPID_nem_file_myrank;
+void creat_closefile(int i){
 	int fd;
-	fd = open("1to0close",O_CREAT,0777);
+	int close_file[128];
+	sprintf(close_file,"%dto%dclose",MPID_nem_file_myrank,i);
+	fd = open(close_file,O_CREAT,0777);
 	if(fd < 0 ){
 		MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"creat close file fail!!");
 		return ;
@@ -83,8 +85,9 @@ int MPID_nem_file_iStartContigMsg(MPIDI_VC_t * vc, void *hdr, MPIDI_msg_sz_t hdr
     MPIU_DBG_MSG_D(CH3_CHANNEL,VERBOSE,"type=%d",close_pkt->type);
  MPIU_DBG_MSG_D(CH3_CHANNEL,VERBOSE,"ack=%d",close_pkt->ack);
     if(close_pkt->type == 72){
-		MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"creat a close file now ......")
-		creat_closefile();
+	MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"creat a close file now ......")
+		creat_closefile(vc->pg_rank);
+		*sreq_ptr = NULL;
 		goto fn_exit;
 	}
 		if (MPIDI_CH3I_Sendq_empty(vc_file->send_queue))

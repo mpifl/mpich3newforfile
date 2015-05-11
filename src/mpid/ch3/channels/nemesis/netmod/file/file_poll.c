@@ -23,12 +23,22 @@ int *get_filefd()
 	}
 	return rev_fd;
 }
-int vertify_closefile_exist()
+int vertify_closefile_exist(int rank)
 {
 	char file_name[128];
-	if(access("1to0close",0)==0||access("0to1close",0)==0)
+	sprintf(file_name,"%dto%dclose",MPID_nem_file_myrank,rank);
+	if(access(file_name,0)==0)
 		return 1;
 	else return 0;
+}
+int remove_closefile(int rank)
+{
+	char file_name[128];
+	sprintf(file_name,"%dto%dclose",MPID_nem_file_myrank,rank);
+	if(remove(file_name)){
+		return 0;	
+	}
+	return 1;
 }
 static int MPID_nem_file_recv_handler(int fd,fileopt_t *fo)
 {
@@ -102,7 +112,7 @@ int MPID_nem_file_poll(int in_blocking_poll)
 	int bytes_recvd = 0;
 	int *fd;
 	fd = get_filefd();
-	while(1){
+
     	for (i = 0; i < MPID_nem_file_nranks; ++i) {
         	if (i == MPID_nem_file_myrank)
             		continue;
@@ -118,20 +128,17 @@ int MPID_nem_file_poll(int in_blocking_poll)
 			goto fn_exit;
 		}
 
-/*		if(vertify_closefile_exist())
+		if(vertify_closefile_exist(i))
 		{
-			if(flag == 1){
-			MPIDI_CHANGE_VC_STATE(fo->vc, CLOSE_ACKED);
 			
 				MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"there is a new close file....");
-				flag = 0;
-				MPID_nem_handle_pkt(fo->vc,close_pkt,sizeof(MPIDI_CH3_Pkt_t));
+				remove_closefile(i);
+				MPIDI_CH3U_Handle_connection(fo->vc,MPIDI_VC_EVENT_TERMINATED);
 				goto fn_exit;
 	
-			}
-		}*/
+		}
 	}
-	}
+	
   fn_exit:
     return mpi_errno;
   fn_fail:

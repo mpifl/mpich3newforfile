@@ -1194,7 +1194,7 @@ int MPIDI_PG_Close_VCs( void )
 
 	    if (vc->state == MPIDI_VC_STATE_ACTIVE ||
 		vc->state == MPIDI_VC_STATE_REMOTE_CLOSE) {
-		//mpi_errno = MPIDI_CH3U_VC_SendClose( vc, i );
+		mpi_errno = MPIDI_CH3U_VC_SendClose( vc, i );
 		vc->state = MPIDI_VC_STATE_CLOSED;
                 if (mpi_errno) MPIU_ERR_POP(mpi_errno);
 	    } else if (vc->state == MPIDI_VC_STATE_INACTIVE ||
