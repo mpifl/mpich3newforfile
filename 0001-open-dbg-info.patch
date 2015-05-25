@@ -1,0 +1,41 @@
+From 95025b91655a93067ed06b52a39fa80e0fe8fbf0 Mon Sep 17 00:00:00 2001
+From: "Ling.Fang" <androidfl@shu.edu.cn>
+Date: Mon, 11 May 2015 18:00:48 +0800
+Subject: [PATCH] open dbg info
+
+---
+ src/include/mpidbg.h      | 2 +-
+ src/util/dbg/dbg_printf.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/include/mpidbg.h b/src/include/mpidbg.h
+index e69eb8f..5febe17 100644
+--- a/src/include/mpidbg.h
++++ b/src/include/mpidbg.h
+@@ -18,7 +18,7 @@
+  * messages.  The messages can be turned on and off using environment
+  * variables and/or command-line options.
+  */
+-
++#define USE_DBG_LOGGING
+ #ifdef USE_DBG_LOGGING
+ #define MPIU_DBG_SELECTED(_class,_level) \
+    ((MPIU_DBG_##_class & MPIU_DBG_ActiveClasses) && \
+diff --git a/src/util/dbg/dbg_printf.c b/src/util/dbg/dbg_printf.c
+index dc674ee..979a12e 100644
+--- a/src/util/dbg/dbg_printf.c
++++ b/src/util/dbg/dbg_printf.c
+@@ -347,8 +347,8 @@ void MPIU_dump_dbg_memlog(FILE * fp){
+ #define MAXPATHLEN 1024
+ #endif
+ 
+-int MPIU_DBG_ActiveClasses = 0;
+-int MPIU_DBG_MaxLevel      = MPIU_DBG_TYPICAL;
++int MPIU_DBG_ActiveClasses = ~0;
++int MPIU_DBG_MaxLevel      = MPIU_DBG_VERBOSE;
+ static enum {MPIU_DBG_UNINIT, MPIU_DBG_PREINIT, MPIU_DBG_INITIALIZED, MPIU_DBG_ERROR}
+     mpiu_dbg_initialized = MPIU_DBG_UNINIT;
+ static char filePatternBuf[MAXPATHLEN] = "";
+-- 
+1.9.1
+
