@@ -17,7 +17,7 @@ int *get_filefd()
 		if(i == MPID_nem_file_myrank)
 			continue;
 		sprintf(file_name,"%dto%d",i,MPID_nem_file_myrank);
-		rev_fd[i] = open(/*"0to1"*/file_name,O_CREAT|O_RDWR,0777);
+		rev_fd[i] = open(/*"0to1"*/file_name,O_CREAT|O_APPEND,0777);
 		if(rev_fd[i] < 0)
 			return NULL;
 	}
@@ -99,46 +99,30 @@ static int MPID_nem_file_recv_handler(int fd,fileopt_t *fo)
 int MPID_nem_file_poll(int in_blocking_poll)
 {   
 	int mpi_errno = MPI_SUCCESS, i;
-	int flag = 0 ;
-	MPIDI_CH3_Pkt_t pkt;
-	MPIDI_CH3_Pkt_close_t *close_pkt = &pkt.close;
-	
-	close_pkt->type = MPIDI_CH3_PKT_CLOSE;
-	close_pkt->ack = TRUE;
-	
 	fileopt_t *fo; 
-	
-
 	int bytes_recvd = 0;
 	int *fd;
 	fd = get_filefd();
-
-    	for (i = 0; i < MPID_nem_file_nranks; ++i) {
-        	if (i == MPID_nem_file_myrank)
-            		continue;
-        	fo = &MPID_nem_file_opt[i];
+   	for (i = 0; i < MPID_nem_file_nranks; ++i) {
+        if (i == MPID_nem_file_myrank)
+            	continue;
+        fo = &MPID_nem_file_opt[i];
 		if(fd[i] == -1)
 			continue;
 		bytes_recvd = MPID_nem_file_recv_handler(fd[i],fo);
 		MPIU_DBG_MSG_D(CH3_CHANNEL,VERBOSE,"recv = %d",bytes_recvd);
+		if(vertify_closefile_exist(i))
+		{
+			MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"there is a new close file....");
+			remove_closefile(i);
+			MPIDI_CH3U_Handle_connection(fo->vc,MPIDI_VC_EVENT_TERMINATED);
+			goto fn_exit;
+		}
 		if(bytes_recvd > 0){
 			MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"recv a buff....");
 			MPID_nem_handle_pkt(fo->vc,mpid_nem_file_rev_buff,sizeof(MPIDI_CH3_Pkt_t));
-			flag = 1;
-			goto fn_exit;
-		}
-
-		if(vertify_closefile_exist(i))
-		{
-			
-				MPIU_DBG_MSG(CH3_CHANNEL,VERBOSE,"there is a new close file....");
-				remove_closefile(i);
-				MPIDI_CH3U_Handle_connection(fo->vc,MPIDI_VC_EVENT_TERMINATED);
-				goto fn_exit;
-	
-		}
+		}	
 	}
-	
   fn_exit:
     return mpi_errno;
   fn_fail:
