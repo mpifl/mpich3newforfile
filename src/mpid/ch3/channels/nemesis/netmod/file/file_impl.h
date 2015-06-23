@@ -13,6 +13,7 @@ typedef GENERIC_Q_DECL(struct MPID_Request) reqq_t;
 typedef struct {
     int fd;
     MPIDI_VC_t *vc;
+    int endpoint;
 } fileopt_t;
 
 /* The vc provides a generic buffer in which network modules can store
@@ -27,12 +28,6 @@ typedef struct {
 /* macro for file private in VC */
 #define VC_FILE(vc) ((MPID_nem_file_vc_area *)vc->ch.netmod_area.padding)
 
-typedef struct {
-    uint64_t seqno;
-} filemsg_t;
-
-#define RQ_FILE(req) ((filemsg_t *)(&(req)->ch.netmod_area.padding))
-
 #define ASSIGN_FO_TO_VC(vc_file_, fo_) do {      \
         (vc_file_)->fo = (fo_);                  \
     } while (0)
@@ -45,7 +40,7 @@ int MPID_nem_file_vc_destroy(MPIDI_VC_t *vc);
 int MPID_nem_file_vc_terminate(MPIDI_VC_t *vc);
 int MPID_nem_file_poll(int in_blocking_poll);
 int MPID_nem_file_finalize(void);
-
+int MPID_nem_file_get_from_bc(const char *business_card, int *remote_endpoint_id);
 
 int MPID_nem_file_iSendContig(MPIDI_VC_t * vc, MPID_Request * sreq,
                               void *hdr, MPIDI_msg_sz_t hdr_sz,
